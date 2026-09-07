@@ -1,0 +1,18 @@
+[project]
+name = "slides-cua"
+version = "0.1.0"
+description = "Computer-use agent that builds Google Slides decks by driving a real browser"
+requires-python = ">=3.10"
+dependencies = [
+  "openai>=2,<3",
+  "PyAutoGUI==0.9.54",
+  "Pillow==11.3.0",
+  "python-dotenv>=1,<2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["slides_cua"]
