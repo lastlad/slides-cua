@@ -80,6 +80,28 @@ def _set_clipboard(text: str) -> None:
     raise RuntimeError("paste_text currently supports macOS only.")
 
 
+def _read_clipboard() -> str | None:
+    try:
+        return subprocess.run(["pbpaste"], capture_output=True, check=True).stdout.decode("utf-8")
+    except Exception:  # noqa: BLE001 - a failed read just means "not settled yet"
+        return None
+
+
+def _await_clipboard(text: str, timeout: float = 2.0) -> None:
+    """Block until the pasteboard actually holds `text`.
+
+    pbcopy exits before the pasteboard is necessarily visible to other processes. Pressing
+    command+v too early pastes stale or partial content, which on a Slides canvas looks
+    like a half-typed field and sends the agent into a retry spiral.
+    """
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if _read_clipboard() == text:
+            return
+        time.sleep(0.05)
+    raise RuntimeError("Clipboard did not settle; refusing to paste stale text.")
+
+
 class Executor:
     """Runs model Python against the real desktop, keeping globals between calls."""
 
@@ -99,8 +121,15 @@ class Executor:
 
         def paste_text(text: str) -> None:
             """Clipboard paste. Far faster and more reliable than typing."""
-            _set_clipboard(str(text))
-            time.sleep(0.05)
+            value = str(text)
+            _set_clipboard(value)
+            _await_clipboard(value)
+            # A modifier still logically held from an earlier hotkey turns command+v into
+            # a bare "v", typing a stray character instead of pasting.
+            for key in ("command", "shift", "option", "ctrl"):
+                with contextlib.suppress(Exception):
+                    pyautogui.keyUp(key)
+            time.sleep(0.1)
             pyautogui.hotkey("command" if sys.platform == "darwin" else "ctrl", "v")
 
         self.namespace: dict[str, Any] = {

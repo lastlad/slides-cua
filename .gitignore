@@ -2,3 +2,9 @@
 .venv/
 runs/
 __pycache__/
+
+# Templates are per-user working material: large source exports plus the ingested
+# catalog and its thumbnails. Ingestion is a local setup step, not a repo artifact.
+templates/
+
+.DS_Store
