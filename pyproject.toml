@@ -8,6 +8,8 @@ dependencies = [
   "PyAutoGUI==0.9.54",
   "Pillow==11.3.0",
   "python-dotenv>=1,<2",
+  "python-pptx>=1,<2",
+  "pypdfium2>=4,<5",
 ]
 
 [build-system]
